@@ -16,7 +16,7 @@ function clearGrid() {
 var textures = {};
 var Pipe = function(scene, options) {
   var self = this;
-  var pipeRadius = 0.2;
+  var pipeRadius = 0.02;
   var ballJointRadius = pipeRadius * 1.5;
   var teapotSize = ballJointRadius;
 
@@ -29,13 +29,13 @@ var Pipe = function(scene, options) {
       map: textures[options.texturePath],
     });
   } else {
-    var color = randomInteger(0, 0xffffff);
+    var color = 0x66bbff; // randomInteger(0, 0xffffff);
     var emissive = new THREE.Color(color).multiplyScalar(0.3);
     self.material = new THREE.MeshPhongMaterial({
       specular: 0xa9fcff,
       color: color,
       emissive: emissive,
-      shininess: 100,
+      shininess: 0,
     });
   }
   var makeCylinderBetweenPoints = function(fromPoint, toPoint, material) {
@@ -59,31 +59,33 @@ var Pipe = function(scene, options) {
     mesh.updateMatrix();
 
     self.object3d.add(mesh);
-  };
-  var makeBallJoint = function(position) {
-    var ball = new THREE.Mesh(
-      new THREE.SphereGeometry(ballJointRadius, 8, 8),
-      self.material
-    );
-    ball.position.copy(position);
-    self.object3d.add(ball);
-  };
-  var makeTeapotJoint = function(position) {
-    //var teapotTexture = textures[options.texturePath].clone();
-    //teapotTexture.repeat.set(1, 1);
 
-    // THREE.TeapotBufferGeometry = function ( size, segments, bottom, lid, body, fitLid, blinn )
-    var teapot = new THREE.Mesh(
-      new THREE.TeapotBufferGeometry(teapotSize, true, true, true, true, true),
-      self.material
-      //new THREE.MeshLambertMaterial({ map: teapotTexture })
-    );
-    teapot.position.copy(position);
-    teapot.rotation.x = (Math.floor(random(0, 50)) * Math.PI) / 2;
-    teapot.rotation.y = (Math.floor(random(0, 50)) * Math.PI) / 2;
-    teapot.rotation.z = (Math.floor(random(0, 50)) * Math.PI) / 2;
-    self.object3d.add(teapot);
+    
   };
+  // var makeBallJoint = function(position) {
+  //   var ball = new THREE.Mesh(
+  //     new THREE.SphereGeometry(ballJointRadius, 8, 8),
+  //     self.material
+  //   );
+  //   ball.position.copy(position);
+  //   self.object3d.add(ball);
+  // };
+  // var makeTeapotJoint = function(position) {
+  //   //var teapotTexture = textures[options.texturePath].clone();
+  //   //teapotTexture.repeat.set(1, 1);
+
+  //   // THREE.TeapotBufferGeometry = function ( size, segments, bottom, lid, body, fitLid, blinn )
+  //   var teapot = new THREE.Mesh(
+  //     new THREE.TeapotBufferGeometry(teapotSize, true, true, true, true, true),
+  //     self.material
+  //     //new THREE.MeshLambertMaterial({ map: teapotTexture })
+  //   );
+  //   teapot.position.copy(position);
+  //   teapot.rotation.x = (Math.floor(random(0, 50)) * Math.PI) / 2;
+  //   teapot.rotation.y = (Math.floor(random(0, 50)) * Math.PI) / 2;
+  //   teapot.rotation.z = (Math.floor(random(0, 50)) * Math.PI) / 2;
+  //   self.object3d.add(teapot);
+  // };
   var makeElbowJoint = function(fromPosition, toPosition, tangentVector) {
     // elbow
     // var r = 0.2;
@@ -151,7 +153,7 @@ var Pipe = function(scene, options) {
   // }
   setAt(self.currentPosition, self);
 
-  makeBallJoint(self.currentPosition);
+  makeElbowJoint(self.currentPosition);
 
   self.update = function() {
     if (self.positions.length > 1) {
@@ -186,13 +188,13 @@ var Pipe = function(scene, options) {
     // joint
     // (initial ball joint is handled elsewhere)
     if (lastDirectionVector && !lastDirectionVector.equals(directionVector)) {
-      if (chance(options.teapotChance)) {
-        makeTeapotJoint(self.currentPosition);
-      } else if (chance(options.ballJointChance)) {
-        makeBallJoint(self.currentPosition);
-      } else {
+      // if (chance(options.teapotChance)) {
+      //   makeTeapotJoint(self.currentPosition);
+      // } else if (chance(options.ballJointChance)) {
+      //   makeBallJoint(self.currentPosition);
+      // } else {
         makeElbowJoint(self.currentPosition, newPosition, lastDirectionVector);
-      }
+      // }
     }
 
     // pipe
@@ -228,7 +230,7 @@ var jointTypeSelect = document.getElementById("joint-types");
 
 var pipes = [];
 var options = {
-  multiple: true,
+  multiple: 5, // true
   texturePath: null,
   joints: jointTypeSelect.value,
   interval: [16, 24], // range of seconds between fade-outs... not necessarily anything like how the original works
@@ -269,7 +271,7 @@ controls.enabled = false;
 var scene = new THREE.Scene();
 
 // lighting
-var ambientLight = new THREE.AmbientLight(0x111111);
+var ambientLight = new THREE.AmbientLight(0xffffff);
 scene.add(ambientLight);
 
 var directionalLightL = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -367,17 +369,17 @@ function animate() {
         jointType === JOINTS_BALL ? 1 : jointType === JOINTS_MIXED ? 1 / 3 : 0,
       texturePath: options.texturePath,
     };
-    if (chance(1 / 20)) {
-      pipeOptions.teapotChance = 1 / 20; // why not? :)
-      pipeOptions.texturePath = "images/textures/candycane.png";
-      // TODO: DRY
-      if (!textures[pipeOptions.texturePath]) {
-        var texture = THREE.ImageUtils.loadTexture(pipeOptions.texturePath);
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(2, 2);
-        textures[pipeOptions.texturePath] = texture;
-      }
-    }
+    // if (chance(1 / 20)) {
+    //   pipeOptions.teapotChance = 1 / 20; // why not? :)
+    //   pipeOptions.texturePath = "images/textures/candycane.png";
+    //   // TODO: DRY
+    //   if (!textures[pipeOptions.texturePath]) {
+    //     var texture = THREE.ImageUtils.loadTexture(pipeOptions.texturePath);
+    //     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    //     texture.repeat.set(2, 2);
+    //     textures[pipeOptions.texturePath] = texture;
+    //   }
+    // }
     // TODO: create new pipes over time?
     for (var i = 0; i < 1 + options.multiple * (1 + chance(1 / 10)); i++) {
       pipes.push(new Pipe(scene, pipeOptions));
